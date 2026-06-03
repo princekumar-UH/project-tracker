@@ -7,9 +7,10 @@ interface ProjectCardProps {
   onEdit: (project: Project) => void;
   onDelete: () => void;
   onClick?: () => void;
+  isAdmin?: boolean;
 }
 
-export default function ProjectCard({ project, onEdit, onDelete, onClick }: ProjectCardProps) {
+export default function ProjectCard({ project, onEdit, onDelete, onClick, isAdmin = false }: ProjectCardProps) {
   const isLate = isProjectLate(project.target_end_date);
   
   const today = new Date();
@@ -48,26 +49,28 @@ export default function ProjectCard({ project, onEdit, onDelete, onClick }: Proj
           </p>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto sm:justify-end sm:shrink-0 mt-2 sm:mt-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(project);
-            }}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xs cursor-pointer transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-white dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-100 dark:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-colors"
-          >
-            Delete
-          </button>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-2 w-full sm:w-auto sm:justify-end sm:shrink-0 mt-2 sm:mt-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(project);
+              }}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xs cursor-pointer transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-white dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-100 dark:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Phase Badge */}
