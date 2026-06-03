@@ -7,9 +7,10 @@ import type { Project, ReleaseItem } from "../types";
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
+  isAdmin?: boolean;
 }
 
-export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
+export default function ProjectDetail({ project, onBack, isAdmin = false }: ProjectDetailProps) {
   const [items, setItems] = useState<ReleaseItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -197,38 +198,40 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
               </div>
 
               {/* Add New Release Item Form */}
-              <form onSubmit={handleAdd} className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-900/40 p-4.5 rounded-xl border border-brand-border">
-                <h3 className="text-xs font-extrabold text-brand-text-title uppercase tracking-wider m-0">Add Release Point</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-                  <div className="sm:col-span-1 space-y-1.5">
-                    <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Title</label>
-                    <input
-                      placeholder="e.g., Auth Module"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
-                      required
-                    />
+              {isAdmin && (
+                <form onSubmit={handleAdd} className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-900/40 p-4.5 rounded-xl border border-brand-border">
+                  <h3 className="text-xs font-extrabold text-brand-text-title uppercase tracking-wider m-0">Add Release Point</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <div className="sm:col-span-1 space-y-1.5">
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Title</label>
+                      <input
+                        placeholder="e.g., Auth Module"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Description (Optional)</label>
+                      <input
+                        placeholder="e.g., Setup OAuth & JWT"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <button
+                        type="submit"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg shadow-xs cursor-pointer transition-colors"
+                      >
+                        Add Point
+                      </button>
+                    </div>
                   </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Description (Optional)</label>
-                    <input
-                      placeholder="e.g., Setup OAuth & JWT"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
-                    />
-                  </div>
-                  <div className="sm:col-span-1">
-                    <button
-                      type="submit"
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg shadow-xs cursor-pointer transition-colors"
-                    >
-                      Add Point
-                    </button>
-                  </div>
-                </div>
-              </form>
+                </form>
+              )}
 
               {/* Release Items List */}
               <div className="space-y-3">
@@ -266,16 +269,18 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setItemToDelete(item)}
-                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 inline-flex items-center justify-center p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 dark:hover:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-all duration-150"
-                        title="Remove release item"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setItemToDelete(item)}
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 inline-flex items-center justify-center p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 dark:hover:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-all duration-150"
+                          title="Remove release item"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (
