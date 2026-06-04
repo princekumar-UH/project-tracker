@@ -7,13 +7,14 @@ interface ProjectCardProps {
   onEdit: (project: Project) => void;
   onDelete: () => void;
   onClick?: () => void;
+  isAdmin?: boolean;
 }
 
-export default function ProjectCard({ project, onEdit, onDelete, onClick }: ProjectCardProps) {
-  const isLate = isProjectLate(project.target_end_date);
+export default function ProjectCard({ project, onEdit, onDelete, onClick, isAdmin = false }: ProjectCardProps) {
+  const isLate = isProjectLate(project.extended_delivery_date || project.target_end_date);
   
   const today = new Date();
-  const targetDate = new Date(project.target_end_date);
+  const targetDate = new Date(project.extended_delivery_date || project.target_end_date);
   const diffDays = (today.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24);
   const isInGracePeriod = diffDays > 0 && diffDays <= GRACE_PERIOD_DAYS;
 
@@ -48,25 +49,37 @@ export default function ProjectCard({ project, onEdit, onDelete, onClick }: Proj
           </p>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto sm:justify-end sm:shrink-0 mt-2 sm:mt-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(project);
-            }}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xs cursor-pointer transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-white dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-100 dark:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-colors"
-          >
-            Delete
-          </button>
+        <div className="flex flex-col gap-2 w-full sm:w-auto items-end mt-2 sm:mt-0 shrink-0">
+          {isAdmin && (
+            <div className="flex gap-2 w-full sm:w-auto sm:justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(project);
+                }}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xs cursor-pointer transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 bg-white dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/20 border border-red-100 dark:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+          {project.pending_at_whom && (
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 rounded-lg border border-amber-200/50 dark:border-amber-900/30 w-fit">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Pending at <span className="font-bold">{project.pending_at_whom}</span></span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -87,7 +100,7 @@ export default function ProjectCard({ project, onEdit, onDelete, onClick }: Proj
       {/* Main Progress Bar (Segmented with color coding) */}
       <SegmentedProgressBar
         currentPhaseId={project.current_phase_id}
-        targetDate={project.target_end_date}
+        targetDate={project.extended_delivery_date || project.target_end_date}
       />
 
       {/* Status Indicators */}
@@ -99,9 +112,22 @@ export default function ProjectCard({ project, onEdit, onDelete, onClick }: Proj
           </span>
         </div>
         <div className="flex flex-col text-right">
-          <span className="font-bold text-[9px] text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Target End</span>
+          <span className="font-bold text-[9px] text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
+            {project.extended_delivery_date ? "Extended End" : "Target End"}
+          </span>
           <span className="text-brand-text-main font-medium mt-0.5">
-            {formatDate(project.target_end_date)}
+            {project.extended_delivery_date ? (
+              <span className="flex flex-col items-end">
+                <span className="line-through text-gray-400 text-[10px] mr-1">
+                  {formatDate(project.target_end_date)}
+                </span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">
+                  {formatDate(project.extended_delivery_date)}
+                </span>
+              </span>
+            ) : (
+              formatDate(project.target_end_date)
+            )}
           </span>
         </div>
       </div>

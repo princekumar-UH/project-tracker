@@ -7,9 +7,10 @@ import type { Project, ReleaseItem } from "../types";
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
+  isAdmin?: boolean;
 }
 
-export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
+export default function ProjectDetail({ project, onBack, isAdmin = false }: ProjectDetailProps) {
   const [items, setItems] = useState<ReleaseItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,11 +18,34 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
   const [description, setDescription] = useState("");
   const [itemToDelete, setItemToDelete] = useState<ReleaseItem | null>(null);
 
-  const isLate = isProjectLate(project.target_end_date);
+  const [pendingAt, setPendingAt] = useState(project.pending_at_whom || "");
+  const [isSavingPendingAt, setIsSavingPendingAt] = useState(false);
+
+  const isLate = isProjectLate(project.extended_delivery_date || project.target_end_date);
   const today = new Date();
-  const targetDate = new Date(project.target_end_date);
+  const targetDate = new Date(project.extended_delivery_date || project.target_end_date);
   const diffDays = (today.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24);
   const isInGracePeriod = diffDays > 0 && diffDays <= GRACE_PERIOD_DAYS;
+
+  const handleSavePendingAt = async () => {
+    setIsSavingPendingAt(true);
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .update({ pending_at_whom: pendingAt.trim() || null })
+        .eq("id", project.id);
+      
+      if (error) {
+        console.error("Error saving pending_at_whom:", error);
+      } else {
+        project.pending_at_whom = pendingAt.trim() || null;
+      }
+    } catch (err) {
+      console.error("Error saving pending_at_whom:", err);
+    } finally {
+      setIsSavingPendingAt(false);
+    }
+  };
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -162,7 +186,7 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
               <div className="mt-4">
                 <SegmentedProgressBar
                   currentPhaseId={project.current_phase_id}
-                  targetDate={project.target_end_date}
+                  targetDate={project.extended_delivery_date || project.target_end_date}
                 />
               </div>
 
@@ -175,10 +199,58 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
                   </span>
                 </div>
                 <div className="flex flex-col text-right">
-                  <span className="font-bold text-[9px] text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Target End</span>
-                  <span className="text-brand-text-main font-medium mt-0.5">
-                    {formatDate(project.target_end_date)}
+                  <span className="font-bold text-[9px] text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
+                    {project.extended_delivery_date ? "Extended End" : "Target End"}
                   </span>
+                  <span className="text-brand-text-main font-medium mt-0.5">
+                    {project.extended_delivery_date ? (
+                      <span className="flex flex-col items-end">
+                        <span className="line-through text-gray-400 text-[10px] mr-1">
+                          {formatDate(project.target_end_date)}
+                        </span>
+                        <span className="text-amber-600 dark:text-amber-400 font-bold">
+                          {formatDate(project.extended_delivery_date)}
+                        </span>
+                      </span>
+                    ) : (
+                      formatDate(project.target_end_date)
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Pending At Whom */}
+              <div className="mt-5 pt-4 border-t border-brand-border space-y-2">
+                <label className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 dark:text-zinc-500 block">
+                  Pending At Whom
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder={isAdmin ? "e.g., UI Team, Client Review" : "No pending blocker"}
+                    value={pendingAt}
+                    onChange={(e) => setPendingAt(e.target.value)}
+                    disabled={!isAdmin || isSavingPendingAt}
+                    className="flex-1 bg-brand-bg-card border border-brand-border p-2 rounded-lg text-xs text-brand-text-title outline-none transition-all input-focus-ring disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
+                  {isAdmin && pendingAt !== (project.pending_at_whom || "") && (
+                    <button
+                      type="button"
+                      onClick={handleSavePendingAt}
+                      disabled={isSavingPendingAt}
+                      className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer transition-colors flex items-center justify-center"
+                      title="Save"
+                    >
+                      {isSavingPendingAt ? (
+                        <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                      ) : (
+                        "Save"
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -197,38 +269,40 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
               </div>
 
               {/* Add New Release Item Form */}
-              <form onSubmit={handleAdd} className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-900/40 p-4.5 rounded-xl border border-brand-border">
-                <h3 className="text-xs font-extrabold text-brand-text-title uppercase tracking-wider m-0">Add Release Point</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-                  <div className="sm:col-span-1 space-y-1.5">
-                    <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Title</label>
-                    <input
-                      placeholder="e.g., Auth Module"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
-                      required
-                    />
+              {isAdmin && (
+                <form onSubmit={handleAdd} className="space-y-4 mb-8 bg-gray-50 dark:bg-zinc-900/40 p-4.5 rounded-xl border border-brand-border">
+                  <h3 className="text-xs font-extrabold text-brand-text-title uppercase tracking-wider m-0">Add Release Point</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <div className="sm:col-span-1 space-y-1.5">
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Title</label>
+                      <input
+                        placeholder="e.g., Auth Module"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Description (Optional)</label>
+                      <input
+                        placeholder="e.g., Setup OAuth & JWT"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <button
+                        type="submit"
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg shadow-xs cursor-pointer transition-colors"
+                      >
+                        Add Point
+                      </button>
+                    </div>
                   </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <label className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">Description (Optional)</label>
-                    <input
-                      placeholder="e.g., Setup OAuth & JWT"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg text-sm text-brand-text-title outline-none transition-all input-focus-ring"
-                    />
-                  </div>
-                  <div className="sm:col-span-1">
-                    <button
-                      type="submit"
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg shadow-xs cursor-pointer transition-colors"
-                    >
-                      Add Point
-                    </button>
-                  </div>
-                </div>
-              </form>
+                </form>
+              )}
 
               {/* Release Items List */}
               <div className="space-y-3">
@@ -266,16 +340,18 @@ export default function ProjectDetail({ project, onBack }: ProjectDetailProps) {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setItemToDelete(item)}
-                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 inline-flex items-center justify-center p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 dark:hover:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-all duration-150"
-                        title="Remove release item"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => setItemToDelete(item)}
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 inline-flex items-center justify-center p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-100 dark:hover:border-red-950/50 rounded-lg shadow-xs cursor-pointer transition-all duration-150"
+                          title="Remove release item"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (

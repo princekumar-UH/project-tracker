@@ -16,9 +16,16 @@ export default function ProjectForm({ initialData, onSubmit, onClose }: ProjectF
     start_date: "",
     target_end_date: "",
     current_phase_id: 1 as number | string,
+    extended_delivery_date: "",
   };
 
-  const [form, setForm] = useState(initialData || defaultForm);
+  const [form, setForm] = useState({
+    ...defaultForm,
+    ...(initialData ? {
+      ...initialData,
+      extended_delivery_date: initialData.extended_delivery_date || ""
+    } : {})
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,6 +48,7 @@ export default function ProjectForm({ initialData, onSubmit, onClose }: ProjectF
     const finalData = {
       ...form,
       percent_complete: calculateCompletion(form.current_phase_id),
+      extended_delivery_date: form.extended_delivery_date || null,
     };
     onSubmit(finalData);
   };
@@ -149,6 +157,19 @@ export default function ProjectForm({ initialData, onSubmit, onClose }: ProjectF
               required
             />
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-500 ml-0.5">
+            Extended Delivery Date (Optional)
+          </label>
+          <input
+            type="date"
+            name="extended_delivery_date"
+            value={form.extended_delivery_date || ""}
+            onChange={handleChange}
+            className="w-full bg-brand-bg-card border border-brand-border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-brand-text-title outline-none transition-all text-sm input-focus-ring"
+          />
         </div>
 
         <div className="bg-indigo-50 dark:bg-indigo-950/30 p-3.5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30 flex justify-between items-center mt-3">

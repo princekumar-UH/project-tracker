@@ -14,6 +14,8 @@ export interface Project {
   current_phase_id: number;
   percent_complete: number;
   status_last_updated: string;
+  extended_delivery_date?: string | null;
+  pending_at_whom?: string | null;
 }
 
 export interface ProjectFormData extends Omit<Project, 'id' | 'percent_complete' | 'status_last_updated'> {
