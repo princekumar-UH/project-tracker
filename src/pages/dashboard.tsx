@@ -210,11 +210,10 @@ export default function Dashboard() {
                     setPasscodeError("");
                     setShowLockModal(true);
                   }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-                    isAdmin
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${isAdmin
                       ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100"
                       : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 hover:bg-gray-100"
-                  }`}
+                    }`}
                   title={isAdmin ? "You are in Admin Mode. Click to manage." : "Enter Admin Mode"}
                 >
                   {isAdmin ? (
@@ -347,7 +346,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            
+
             <div className="space-y-1.5">
               <h3 className="text-lg font-extrabold text-brand-text-title m-0">Delete Project</h3>
               <p className="text-sm text-brand-text-main">

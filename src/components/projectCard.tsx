@@ -12,14 +12,14 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project, onEdit, onDelete, onClick, isAdmin = false }: ProjectCardProps) {
   const isLate = isProjectLate(project.extended_delivery_date || project.target_end_date);
-  
+
   const today = new Date();
   const targetDate = new Date(project.extended_delivery_date || project.target_end_date);
   const diffDays = (today.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24);
   const isInGracePeriod = diffDays > 0 && diffDays <= GRACE_PERIOD_DAYS;
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className="bg-brand-bg-card border border-brand-border rounded-xl shadow-xs p-6 hover:shadow-md hover:border-gray-300 dark:hover:border-zinc-700 cursor-pointer transition-all text-left group"
     >
